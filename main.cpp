@@ -47,6 +47,9 @@ LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
         case WM_KEYDOWN:
             if (wParam == VK_ESCAPE) DestroyWindow(main_windows_hwnd);
             return 0;
+        case WM_DESTROY:
+            PostQuitMessage(0);
+            return 0;
         default:
             return DefWindowProc(hWnd, msg, wParam, lParam);
     }
