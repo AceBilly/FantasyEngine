@@ -1,3 +1,0 @@
-C:/Users/yhtse/CLionProjects/Directx12Render/cmake-build-debug/CMakeFiles/Directx12Render.dir
-C:/Users/yhtse/CLionProjects/Directx12Render/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/yhtse/CLionProjects/Directx12Render/cmake-build-debug/CMakeFiles/rebuild_cache.dir

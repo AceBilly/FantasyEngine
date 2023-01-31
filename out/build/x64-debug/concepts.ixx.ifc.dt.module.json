@@ -1,9 +1,0 @@
-{
-    "Version": "1.1",
-    "Data": {
-        "Source": "c:\\users\\yhtse\\clionprojects\\directx12render\\engine\\modules\\concepts.ixx",
-        "ProvidedModule": "Render.Concepts",
-        "ImportedModules": [],
-        "ImportedHeaderUnits": []
-    }
-}
