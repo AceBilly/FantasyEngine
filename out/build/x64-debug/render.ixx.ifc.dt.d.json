@@ -1,0 +1,10 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "c:\\users\\yhtse\\clionprojects\\directx12render\\engine\\modules\\render.ixx",
+        "ProvidedModule": "Render",
+        "Includes": [],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}

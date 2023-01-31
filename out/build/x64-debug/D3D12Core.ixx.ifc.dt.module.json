@@ -1,0 +1,12 @@
+{
+    "Version": "1.1",
+    "Data": {
+        "Source": "c:\\users\\yhtse\\clionprojects\\directx12render\\engine\\modules\\d3d12core.ixx",
+        "ProvidedModule": "Render.D3D12Core",
+        "ImportedModules": [
+            "Render.Concepts",
+            "Render.Error"
+        ],
+        "ImportedHeaderUnits": []
+    }
+}
