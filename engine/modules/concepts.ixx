@@ -4,11 +4,15 @@ module;
 export module Render.Concepts;
 export
 namespace render::concepts {
+
+    template<typename T>
+    concept CoordsType = std::integral<T> || std::floating_point<T>;
+
     template<typename T>
     concept Pointer = requires(T obj) {
         obj == nullptr;
     };
-
+// todo:
     template<typename T>
     concept Releaseable = requires {
 
