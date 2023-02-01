@@ -13,7 +13,7 @@ using namespace std::literals::string_literals;
 LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, PSTR cmdLine, int nShowCmd) {
-  Window window(hInstance, "FantasyEngine"s, MainWindowProc);
+  Window window(hInstance, nShowCmd, "FantasyEngine"s, MainWindowProc);
   window.CreateWindowCustom();
   return window.Run();
 }
