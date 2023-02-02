@@ -8,7 +8,7 @@ module;
 #include <utility>
 export module window;
 
-import common;
+import Common;
 import Render.Error;
 
 namespace error = render::error;
@@ -20,7 +20,7 @@ concept WindowProcType = requires(Func func, HWND hWnd, UINT msg, WPARAM wParam,
 
 struct WindowDescriptor {
     HWND window_handle;
-    Rect<uint8_t> window_pos_and_size;
+    Rect<::uint8_t> window_pos_and_size;
     std::string window_title;
     HINSTANCE instance;
     int show_cmd;
@@ -30,6 +30,7 @@ export
 namespace fantasy::window {
     class Window {
     public:
+      // todo: control window size
         Window(HINSTANCE instance,const int& show_cmd, const std::string& title, WindowProcType auto callback) {
           m_window_descriptor.instance = instance;
           m_window_descriptor.window_title = title;
@@ -43,7 +44,7 @@ namespace fantasy::window {
         ~Window()= default;
       public:
         void CreateWindowCustom() {
-          if (!(m_window_descriptor.window_handle =  CreateWindowEx(0, "FantasyEngineDemo", "FantasyEngine",
+          if (!(m_window_descriptor.window_handle =  CreateWindowEx(0, "FantasyEngineDemo", m_window_descriptor.window_title.c_str(),
                                                                    WS_OVERLAPPEDWINDOW,
                                                                    CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
                                                                    nullptr, nullptr, m_window_descriptor.instance, nullptr))) {
@@ -65,7 +66,8 @@ namespace fantasy::window {
         }
       private:
         void InitialWindow(WindowProcType auto callback) {
-          thread_local WNDCLASSEX window_class{0};
+          // todo: how manage windows class
+          WNDCLASSEX window_class{0};
           window_class.cbSize = sizeof(WNDCLASSEX);
           window_class.style = CS_HREDRAW | CS_VREDRAW;
           window_class.lpfnWndProc = callback;

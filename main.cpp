@@ -3,8 +3,10 @@
 #include <string>
 #include <Windows.h>
 #include <wchar.h>
+
 import Render.Error;
 import window;
+
 namespace error = render::error;
 using namespace fantasy::window;
 using namespace std::literals::string_literals;

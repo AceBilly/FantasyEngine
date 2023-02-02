@@ -1,10 +1,12 @@
 module;
 #include <concepts>
 #include <Windows.h>
+
 export module Render.Concepts;
+import Common;
+
 export
 namespace render::concepts {
-
     template<typename T>
     concept CoordsType = std::integral<T> || std::floating_point<T>;
 
@@ -15,10 +17,7 @@ namespace render::concepts {
 // todo:
     template<typename T>
     concept Releaseable = requires {
-
-        typename decltype(&T::Release);  // clang and gcc not compile
-
-//        std::same_as<typename decltype(&T::Release), ULONG(T* )>; // msvc not compile but clangd intelligence is successed
+      {&T::Release};
     };
 }  // render::concepts
 
