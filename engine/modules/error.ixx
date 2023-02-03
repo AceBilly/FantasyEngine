@@ -4,8 +4,9 @@ module;
 #include <iostream>
 #include <string>
 export module Render.Error;
-import Render.Concepts;
-using namespace render::concepts;
+import Common;
+
+using namespace common;
 
 export
 namespace render::error {

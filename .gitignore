@@ -2,3 +2,4 @@
 out/
 cmake-build-debug/
 .idea/
+d3dx12.h

@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 23)
 include_directories($ENV{WindowsSdkDir\\Include\\$ENV{WindowsSDKVersion}\\um\\})
 link_directories($ENV{WindowsSdkDir\\Lib\\$ENV{WindowsSDKVersion}\\um\\arch\\})
 
-add_executable(Directx12Render WIN32 main.cpp engine/modules/error.ixx engine/modules/concepts.ixx engine/modules/D3D12Core.ixx engine/modules/render.ixx engine/modules/window.ixx engine/modules/common.ixx)
+add_executable(Directx12Render WIN32 main.cpp engine/modules/error.ixx engine/modules/D3D12Core.ixx engine/modules/render.ixx engine/modules/window.ixx engine/modules/common.ixx)
 
 target_link_libraries(Directx12Render D3d12.lib)
 
