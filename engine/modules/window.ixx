@@ -10,7 +10,7 @@ export module window;
 
 import Common;
 import Render.Error;
-
+using namespace common;
 namespace error = render::error;
 
 template<typename Func>

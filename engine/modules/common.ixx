@@ -8,7 +8,9 @@ module;
 #include <type_traits>
 #include <concepts>
 #include <ranges>
+#include <filesystem>
 export module Common;
+namespace fs = std::filesystem;
 export
 namespace common {
 
@@ -38,6 +40,7 @@ struct RenderCoreCommonData {
   uint8_t resolution_height;
   uint8_t buffer_count;
   uint8_t current_buffer_index;
+  fs::path assets_directory;
 };
 
 // interface: Render

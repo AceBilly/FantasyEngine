@@ -1,10 +1,12 @@
 module;
-#include <d3d12.h>
-#include <dxgi1_6.h>
 #include <cstdint>
 #include <wrl.h>
 #include "../inc/d3dx12.h"
 #include <vector>
+#include <filesystem>
+#include <d3dcompiler.h>
+#include <d3d12.h>
+#include <dxgi1_6.h>
 export module Render.D3D12Core;
 
 import Render.Error;
@@ -13,6 +15,7 @@ import Common;
 using namespace render::error;
 using namespace common;
 using namespace Microsoft::WRL;
+namespace fs = std::filesystem;
 
 // global variable
 
@@ -29,9 +32,12 @@ struct D3D12PipelineObject {
   IDXGIFactory7 *dxgi_factory{ nullptr };
   ID3D12CommandQueue *command_queue{ nullptr };
   ID3D12CommandAllocator *command_allocator {nullptr};
+  ID3D12GraphicsCommandList1 *command_list {nullptr};
   IDXGISwapChain3 *swap_chain { nullptr };
   ID3D12DescriptorHeap* rtv_heap{nullptr};
   ID3D12DescriptorHeap* dsv_heap{nullptr};
+  ID3D12RootSignature* root_signature{nullptr};
+  ID3D12PipelineState *pipeline_state {nullptr};
 
   std::vector<ID3D12Resource2*> rtv_resources;
   std::vector<ID3D12Resource2*> dsv_resources;
@@ -41,7 +47,7 @@ struct D3D12PipelineObject {
   ~D3D12PipelineObject() {
     Release(main_device, dxgi_factory, command_queue, swap_chain,
             rtv_heap, dsv_heap, rtv_resources, dsv_resources,
-            command_allocator
+            command_allocator, root_signature, pipeline_state
             );
   }
 };
@@ -54,8 +60,7 @@ namespace render::core {
         InitialPipeline();
       }
     private:
-        void InitialPipeline()
-      {
+      void InitialPipeline() {
         // create device
         {
           Failed(CreateDXGIFactory2(0, IID_PPV_ARGS(&m_pipeline.dxgi_factory)));
@@ -119,9 +124,70 @@ namespace render::core {
           Failed(m_pipeline.main_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_pipeline.command_allocator)));
         }
       }
+      void LoadAssets() {
+        // Create root signature
+        {
+          CD3DX12_ROOT_SIGNATURE_DESC root_signature_desc;
+          root_signature_desc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+          ID3DBlob *serialized_root_signature {nullptr};
+          Failed(D3D12SerializeRootSignature(&root_signature_desc, D3D_ROOT_SIGNATURE_VERSION_1_1, &serialized_root_signature, nullptr));
+          Failed(m_pipeline.main_device->CreateRootSignature(0,
+                                                             serialized_root_signature->GetBufferPointer(),
+                                                             serialized_root_signature->GetBufferSize(),
+                                                             IID_PPV_ARGS(&m_pipeline.root_signature)));
+          Release(serialized_root_signature);  // why not use smart pointer?!
+        }
+        // create pipeline states object
+        {
+          ID3DBlob* vertex_shader = CompileShader("Shader.hlsl", "vs_5_0", "VS_main");
+          ID3DBlob* pixel_shader  = CompileShader("Shader.hlsl", "ps_5_0", "PS_main");
+          D3D12_INPUT_ELEMENT_DESC  input_element_desc[] =
+              {
+                  { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+                  { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+              };
+          D3D12_GRAPHICS_PIPELINE_STATE_DESC graphics_pipeline_state{};
+          graphics_pipeline_state.pRootSignature = m_pipeline.root_signature;
+          graphics_pipeline_state.VS = CD3DX12_SHADER_BYTECODE(vertex_shader);
+          graphics_pipeline_state.PS = CD3DX12_SHADER_BYTECODE(pixel_shader);
+          graphics_pipeline_state.SampleMask = UINT_MAX;
+          graphics_pipeline_state.DepthStencilState = {
+              .DepthEnable = true,
+              .DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL,
+              .DepthFunc = D3D12_COMPARISON_FUNC_LESS,
+              .StencilEnable = false
+          };
+          graphics_pipeline_state.InputLayout = {
+              .pInputElementDescs = input_element_desc,
+              .NumElements = _countof(input_element_desc)
+          };
+          graphics_pipeline_state.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+          graphics_pipeline_state.NumRenderTargets = 1;
+          graphics_pipeline_state.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+          graphics_pipeline_state.SampleDesc.Count = 1;
+          graphics_pipeline_state.DSVFormat = DXGI_FORMAT_D16_UNORM;
+          graphics_pipeline_state.NodeMask = 0;
 
-        IDXGIAdapter4* DetectHighestPerformanceAdapter() const;
+
+          //  Temporary Zeroing or default;
+//          graphics_pipeline_state.StreamOutput {};
+          graphics_pipeline_state.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+          graphics_pipeline_state.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+
+          Failed(m_pipeline.main_device->CreateGraphicsPipelineState(&graphics_pipeline_state, IID_PPV_ARGS(&m_pipeline.pipeline_state)));
+          Release(vertex_shader, pixel_shader);
+        }
+        // Create command list
+        {
+          Failed(m_pipeline.main_device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
+                                                            m_pipeline.command_allocator, m_pipeline.pipeline_state, IID_PPV_ARGS(&m_pipeline.command_list)));
+          Failed(m_pipeline.command_list->Close());
+        }
+      }
+
+        [[nodiscard]] IDXGIAdapter4* DetectHighestPerformanceAdapter() const;
         void CreateBufferResource(ID3D12DescriptorHeap* heap_desc,std::vector<ID3D12Resource2*> buffer, UINT descriptor_size);
+        [[nodiscard]] ID3DBlob* CompileShader(const fs::path& shader_path, const std::string& compiler_target, const std::string& shader_entry_point);
 
       private:
         //----pipeline-----object-----
@@ -137,6 +203,7 @@ module : private;
 void Release(Releaseable auto p_obj) {
     if (p_obj != nullptr) {
         p_obj->Release();
+        p_obj = nullptr;
     }
 }
 void Release(ReleaseableContainer auto container) {
@@ -173,4 +240,11 @@ void render::core::D3D12Core::CreateBufferResource(
         handle.Offset(1, descriptor_size);
     }
 
+}
+ID3DBlob *render::core::D3D12Core::CompileShader(
+    const fs::path &shader_path,
+    const std::string &compile_target, const std::string &shader_entry_point) {
+    ID3DBlob *result{nullptr};
+    Failed(D3DCompileFromFile(shader_path.c_str(), nullptr, nullptr, shader_entry_point.c_str(), compile_target.c_str(), D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &result, nullptr));
+    return result;
 }
